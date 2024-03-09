@@ -1,2 +1,5 @@
 ---
-# tasks file for common
+- name: Update Packages
+  ansible.builtin.import_tasks:
+    file: update_package.yml
+
