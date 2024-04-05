@@ -1,0 +1,39 @@
+{
+	"ansible.validation.lint.path": "/usr/bin/ansible-lint",
+	"ansible.executionEnvironment.image": "quay.io/ansible/creator-ee:latest",
+	"ansible.python.interpreterPath": "/usr/bin/python3",
+	"ansible.executionEnvironment.enabled": true,
+	"ansible.executionEnvironment.containerEngine": "docker",
+	"ansible.executionEnvironment.volumeMounts": [
+
+	],
+	"editor.insertSpaces": false,
+    "editor.formatOnSave": true,
+	"redhat.telemetry.enabled": false,
+    "[ansible]": {
+        "editor.detectIndentation": true,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.quickSuggestions": {
+            "comments": true,
+            "other": true,
+            "strings": true
+        }
+    },
+    "[yaml]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.autoIndent": "keep",
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": true
+        }
+    },
+    "git.autofetch": true,
+    "files.associations": {
+        "*.yml": "ansible"
+    },
+    "ansible.lightspeed.URL": ""
+}
