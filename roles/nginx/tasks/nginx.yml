@@ -1,0 +1,79 @@
+- name: Install and configure nginx reverse proxy with Let's Encrypt
+  block:
+
+    - name: Install nginx and Certbot with Cloudflare DNS plugin
+      apt:
+        name:
+          - nginx
+          - python3-certbot
+          - python3-certbot-dns-cloudflare
+        state: present
+        update_cache: true
+      become: true
+
+    - name: Ensure certbot secrets directory exists
+      file:
+        path: /root/.secrets/certbot
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+      become: true
+
+    - name: Copy Cloudflare credentials for Certbot DNS challenge
+      copy:
+        content: |
+          dns_cloudflare_api_token = {{ cloudflare_api_token }}
+        dest: /root/.secrets/certbot/cloudflare.ini
+        owner: root
+        group: root
+        mode: '0600'
+      become: true
+
+    - name: Remove default nginx site configs
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /etc/nginx/sites-enabled/default
+        - /etc/nginx/sites-available/default
+      become: true
+
+    - name: Deploy nginx site configuration
+      template:
+        src: nginx_site.conf.j2
+        dest: /etc/nginx/sites-available/{{ web_domain }}
+        owner: root
+        group: root
+        mode: '0644'
+      become: true
+
+    - name: Enable nginx site
+      file:
+        src: /etc/nginx/sites-available/{{ web_domain }}
+        dest: /etc/nginx/sites-enabled/{{ web_domain }}
+        state: link
+      become: true
+
+    - name: Obtain Let's Encrypt certificate via DNS-01 (Cloudflare)
+      command: >
+        certbot certonly
+        --dns-cloudflare
+        --dns-cloudflare-credentials /root/.secrets/certbot/cloudflare.ini
+        --dns-cloudflare-propagation-seconds 60
+        --non-interactive
+        --agree-tos
+        --no-eff-email
+        --m {{ letsencrypt_email }}
+        -d {{ web_domain }}
+      args:
+        creates: "/etc/letsencrypt/live/{{ web_domain }}/fullchain.pem"
+      become: true
+
+    - name: Reload nginx
+      service:
+        name: nginx
+        state: reloaded
+      become: true
+
+  when: web_service | default(false) | bool

@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: true
+  vars:
+    ansible_user: automation
+    remote_tmp: "/tmp/.ansible/tmp"
+  roles:
+    - role: base_config
+    - role: docker_setup
+      when: "docker_required == true"

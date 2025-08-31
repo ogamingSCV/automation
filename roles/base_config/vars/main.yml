@@ -1,0 +1,12 @@
+---
+base_config_automation_ssh_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGjVfZ5MkCiUZz4JmGCow0NQdxhiEmZH3Ni9gfE+SwaR automation@automation
+base_config_pschmidt_ssh_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBOZgDkG1+JIk92gNxSVPJp83HsZKL86qd1wpKZv+2DN 1P
+base_config_users:
+  - username: "root"
+    home: "/root"
+    zsh_path: "/root/.oh-my-zsh"
+  - username: "pschmidt"
+    home: "/home/pschmidt"
+    zsh_path: "/home/pschmidt/.oh-my-zsh"
+base_config_nexus_url: "https://nexus.home.net/repository"
+base_config_locale: 'en_US.UTF-8'

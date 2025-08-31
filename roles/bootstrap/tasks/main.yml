@@ -1,0 +1,43 @@
+---
+- name: Wait for SSH to become available
+  ansible.builtin.wait_for_connection:
+    delay: 5
+    timeout: 90
+    sleep: 3
+
+- name: Gather facts manually after SSH is ready
+  ansible.builtin.setup:
+
+- name: Create user automation
+  ansible.builtin.user:
+    name: automation
+    shell: /bin/bash
+    groups: sudo
+    append: true
+
+- name: Set authorized key for automation user
+  ansible.posix.authorized_key:
+    user: automation
+    state: present
+    key: "{{ base_config_automation_ssh_key }}"
+
+- name: Remove authorized key for root
+  ansible.posix.authorized_key:
+    user: root
+    state: absent
+    key: "{{ base_config_automation_ssh_key }}"
+
+- name: Ensure user automation has passwordless sudo rights
+  ansible.builtin.lineinfile:
+    dest: /etc/sudoers
+    state: present
+    line: 'automation ALL=(ALL) NOPASSWD:ALL'
+    validate: '/usr/sbin/visudo -cf %s'
+
+- name: Remove sudo hint message for user automation
+  ansible.builtin.file:
+    path: "/home/automation/.sudo_as_admin_successful"
+    state: touch
+    owner: automation
+    group: automation
+    mode: "0640"

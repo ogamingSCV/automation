@@ -1,0 +1,3 @@
+---
+- name: Import nginx tasks
+  ansible.builtin.import_tasks: nginx.yml

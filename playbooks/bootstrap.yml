@@ -1,0 +1,8 @@
+---
+- hosts: all
+  gather_facts: false
+  vars:
+    ansible_user: root
+    remote_tmp: "/tmp/.ansible/tmp"
+  roles:
+    - role: bootstrap
