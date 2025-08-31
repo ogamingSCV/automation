@@ -1,0 +1,4 @@
+skip_list:
+  - yaml[line-length]
+    # https://www.reddit.com/r/ansible/comments/18d4cgh/ansiblelint_ignore_linelength/
+    # https://ansible.readthedocs.io/projects/lint/configuring/#ansible-lint-configuration
