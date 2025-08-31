@@ -1,0 +1,52 @@
+# Disable SSH v1
+Protocol 2
+
+# Disable root login via SSH
+PermitRootLogin no
+
+# Disable password authentication, allow only public key
+PasswordAuthentication no
+PermitEmptyPasswords yes # Needed due to default users no having a password. Will be fixed with Vault
+ChallengeResponseAuthentication no
+UsePAM yes
+PubkeyAuthentication yes
+
+# Disable less secure authentication methods
+KerberosAuthentication no
+GSSAPIAuthentication no
+KbdInteractiveAuthentication no
+
+# Limit authentication attempts
+MaxAuthTries 6
+
+# Limit sessions
+MaxSessions 10
+
+# Use only strong ciphers, Host Key Algorithms, key exchange, and MAC algorithms
+Ciphers aes128-ctr,aes192-ctr,aes256-ctr
+HostKeyAlgorithms ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,ssh-rsa
+KexAlgorithms ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group14-sha256,diffie-hellman-group-exchange-sha256
+MACs hmac-sha2-256,hmac-sha2-512
+
+# Set idle timeout and connection limits
+ClientAliveInterval 600
+ClientAliveCountMax 0
+LoginGraceTime 120
+
+# Allow only Port 22
+Port 22
+
+# Disable X11 forwarding unless necessary
+X11Forwarding no
+
+# Enable logging
+LogLevel VERBOSE
+
+# Agent Forwarding allowed
+AllowAgentForwarding yes
+
+# Banner
+Banner /etc/banner
+
+# Enabke SFTP Subsystem via ssh for Ansible
+Subsystem sftp /usr/lib/openssh/sftp-server

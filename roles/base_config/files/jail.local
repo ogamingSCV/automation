@@ -1,0 +1,25 @@
+[DEFAULT]
+# Ban hosts for one hour:
+bantime = 1h
+
+# Scan logs every 10 minutes:
+findtime = 10m
+
+# Max number of failed login attempts before banning:
+maxretry = 5
+
+# Enable email notifications (optional)
+# destemail = your-email@example.com
+# sendername = Fail2Ban
+# smtpserver = smtp.example.com
+# mta = sendmail
+
+[sshd]
+# Enable the SSH jail
+enabled = true
+
+# Path to the SSH log file (may vary depending on your setup)
+logpath = /var/log/auth.log
+
+# SSH port (change if you use a non-standard port)
+port = ssh

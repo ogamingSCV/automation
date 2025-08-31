@@ -1,0 +1,63 @@
+# ~/.zshrc
+
+# Path to zinit
+source "${HOME}/.zinit/bin/zinit.zsh"
+
+# Load the Agnoster theme
+zinit light sindresorhus/pure
+
+# Colored Man Pages
+zinit light Aloxaf/fzf-tab
+zinit light robbyrussell/oh-my-zsh@a79e3f44
+zinit light paulirish/git-open
+zinit light sindresorhus/pure
+zinit light jimeh/zsh-peco-history
+
+# Syntax Highlighting
+zinit light zsh-users/zsh-syntax-highlighting
+
+# Plugin: Autosuggestions
+zinit light zsh-users/zsh-autosuggestions
+
+# Plugin: Colored man pages
+zinit light Aloxaf/fzf-tab
+
+# Plugin: Colorize (colored output for cat, etc.)
+zinit light zsh-users/zsh-colorize
+
+# Plugin: Command-not-found (suggest commands when mistyped)
+zinit light zsh-users/zsh-command-not-found
+
+# Plugin: git
+zinit light tj/git-extras
+
+# Plugin: you-should-use
+zinit light MichaelAquilina/zsh-you-should-use
+
+# Load powerlevel10k theme
+zinit ice depth"1" # git clone depth
+zinit light romkatv/powerlevel10k
+
+autoload -U colors && colors
+# Path to source zshrc
+source "$ZSH/oh-my-zsh.sh"
+# Source autocomplete
+autoload -Uz compinit && compinit
+# Command-not-found
+autoload -Uz compinit && compinit
+# Commands options
+autoload -Uz colors && colors
+# Default directories
+
+# Source Autocomplete
+zinit light michaelAquilina/zsh-you-should-use
+autoload -Uz colors && colors
+
+
+# Make zinit faster
+zinit light jimeh/zsh-peco-history
+
+zinit load robbyrussel/oh-my-zsh
+
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
