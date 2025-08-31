@@ -1,3 +1,5 @@
 inventories/hosts.ini
 hosts.ini
 group_vars/all.yml
+terraform_inventory.json
+.vscode/settings.json
