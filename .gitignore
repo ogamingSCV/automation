@@ -1,2 +1,3 @@
 inventories/hosts.ini
 hosts.ini
+group_vars/all.yml
