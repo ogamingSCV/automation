@@ -1,0 +1,13 @@
+---
+- name: Copy CA Cert
+  ansible.builtin.copy:
+    src: ca.home.net.crt
+    dest: /usr/local/share/ca-certificates/ca.home.net.crt
+    mode: "0644"
+  register: ca_copy
+
+- name: Update CA Trust store
+  ansible.builtin.shell:
+    cmd: update-ca-certificates
+    creates: /etc/ssl/certs/ca.home.net.pem
+      #when: ca_copy is changed # maybe needs to be removed to dont skip

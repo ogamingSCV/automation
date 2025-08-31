@@ -1,0 +1,35 @@
+---
+- name: Change default Debian Repo to Nexus
+  ansible.builtin.template:
+    src: debian.source.list.j2
+    dest: "/etc/apt/sources.list"
+    mode: '0644'
+  when: ansible_distribution == "Debian"
+
+- name: Change default Ubuntu Repo to Nexus
+  ansible.builtin.template:
+    src: ubuntu.source.list.j2
+    dest: "/etc/apt/sources.list"
+    mode: '0644'
+  when: ansible_distribution == "Ubuntu"
+
+- name: Change Proxmox VE Repo to Nexus
+  ansible.builtin.template:
+    src: pve.list.j2
+    dest: "/etc/apt/sources.list.d/pve.list"
+    mode: '0644'
+  when: "'Proxmox' in ansible_facts['lsb']['description']"
+
+- name: Change Proxmox Cepth Repo to Nexus
+  ansible.builtin.template:
+    src: ceph.list.j2 # manually set to quincy
+    dest: "/etc/apt/sources.list.d/ceph.list"
+    mode: '0644'
+  when: "'Proxmox' in ansible_facts['lsb']['description']"
+
+# - name: Change Proxmox BS to Nexus
+#   ansible.builtin.template:
+#     src: source.list.d.pbs.list.j2
+#     dest: "/etc/apt/sources.list.d/pbs.list"
+#     mode: '0644'
+#   when: "'Proxmox' in ansible_facts['lsb']['description']"

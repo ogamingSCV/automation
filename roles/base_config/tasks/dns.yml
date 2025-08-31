@@ -1,0 +1,35 @@
+---
+- name: "Construct FQDN from inventory data"
+  ansible.builtin.set_fact:
+    fqdn_hostname: "{{ hostname }}.{{ domain }}"
+
+- name: Set a hostname
+  ansible.builtin.hostname:
+    name: "{{ fqdn_hostname }}"
+  become: true
+
+- name: "Ensure /etc/hosts entry for hostname"
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ ansible_default_ipv4.address }} {{ fqdn_hostname }} {{ hostname }}"
+    regexp: "^{{ ansible_default_ipv4.address }}\\s"
+    state: present
+  become: true
+
+- name: "Add DNS rewrite to AdGuard Home"
+  ansible.builtin.uri:
+    url: "{{ adguard_host }}/control/rewrite/add"
+    method: POST
+    body_format: json
+    body:
+      domain: "{{ hostname }}.{{ domain }}"
+      answer: "{{ ansible_host }}"
+    status_code: 200
+    validate_certs: false
+    return_content: true
+    headers:
+      Content-Type: "application/json"
+      url_username: "{{ adguard_api_user }}"
+      url_password: "{{ adguard_api_pass }}"
+      force_basic_auth: true
+  delegate_to: localhost

@@ -1,0 +1,107 @@
+---
+# - name: "Fetch Checkmk server version"
+#   set_fact:
+#     checkmk_server_version: "{{ lookup('checkmk.general.version',
+#       server_url=checkmk_var_server_url,
+#       site=checkmk_var_site,
+#       validate_certs=False,
+#       automation_user=checkmk_var_automation_user,
+#       automation_secret=checkmk_var_automation_secret) }}"
+#
+# - name: "Set Checkmk version fact"
+#   ansible.builtin.set_fact:
+#     checkmk_server_version: "{{ checkmk_version_result.stdout }}"
+
+- name: "Fetch Checkmk version using Ansible URI"
+  ansible.builtin.uri:
+    url: "{{ checkmk_var_server_url }}/check_mk/api/1.0/version"
+    method: GET
+    user: "{{ checkmk_var_automation_user }}"
+    password: "{{ checkmk_var_automation_secret }}"
+    #force_basic_auth: true
+    return_content: true
+    status_code: 200
+    validate_certs: false
+  delegate_to: localhost
+  register: checkmk_version_response
+
+- name: "Set Checkmk version fact"
+  ansible.builtin.set_fact:
+    checkmk_server_version: "{{ checkmk_version_response.json.versions.checkmk }}"
+  delegate_to: localhost
+
+- name: "Construct raw agent download URL"
+  set_fact:
+    checkmk_agent_url: "{{ checkmk_var_server_url }}/check_mk/agents/check-mk-agent_{{ checkmk_server_version }}-1_all.deb"
+
+- name: "Download Checkmk agent directly on host"
+  ansible.builtin.get_url:
+    url: "{{ checkmk_agent_url }}"
+    dest: "/tmp/checkmk-agent.deb"
+    mode: '0644'
+    validate_certs: false
+  become: true
+
+- name: "Install Checkmk agent"
+  ansible.builtin.apt:
+    deb: "/tmp/checkmk-agent.deb"
+    state: present
+  become: true
+
+- name: "Create hosts."
+  checkmk.general.host:
+    server_url: "{{ checkmk_var_server_url }}"
+    site: "{{ checkmk_var_site }}"
+    validate_certs: false
+    automation_user: "{{ checkmk_var_automation_user }}"
+    automation_secret: "{{ checkmk_var_automation_secret }}"
+    name: "{{ inventory_hostname }}"
+    attributes:
+      site: "{{ checkmk_var_site }}"
+      ipaddress: "{{ ansible_host }}"
+      # Maybe with for each loop {{ tags }}
+      # - tag_proxmox_facts: "Bar"
+  delegate_to: localhost
+
+- name: "Activate changes on site."
+  checkmk.general.activation:
+    server_url: "{{ checkmk_var_server_url }}"
+    site: "{{ checkmk_var_site }}"
+    validate_certs: false
+    automation_user: "{{ checkmk_var_automation_user }}"
+    automation_secret: "{{ checkmk_var_automation_secret }}"
+    force_foreign_changes: 'true'
+    sites:
+      - "{{ checkmk_var_site }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: "Check if agent is already registered"
+  ansible.builtin.command: /usr/bin/cmk-agent-ctl status
+  register: agent_status
+  failed_when: false
+  changed_when: false
+  become: true
+
+- name: "Register agent controller"
+  ansible.builtin.command:
+    cmd: >
+      /usr/bin/cmk-agent-ctl register
+      --hostname {{ inventory_hostname }}
+      --server {{ checkmk_var_server_hostname }}
+      --site {{ checkmk_var_site }}
+      --user {{ checkmk_var_automation_user }}
+      --password {{ checkmk_var_automation_secret }}
+  when: "'Not registered' in agent_status.stdout"
+  become: true
+
+- name: "Run service discovery on new host and add new services"
+  checkmk.general.discovery:
+    server_url: "{{ checkmk_var_server_url }}"
+    site: "{{ checkmk_var_site }}"
+    validate_certs: false
+    automation_user: "{{ checkmk_var_automation_user }}"
+    automation_secret: "{{ checkmk_var_automation_secret }}"
+    host_name: "{{ inventory_hostname }}"
+    state: "new"
+  delegate_to: localhost

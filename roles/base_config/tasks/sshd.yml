@@ -1,0 +1,29 @@
+---
+- name: Harden SSH configuration via template
+  ansible.builtin.copy:
+    src: sshd_config
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart ssh
+
+- name: Setup Login Banner
+  ansible.builtin.copy:
+    src: banner
+    dest: /etc/banner
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Get list of files in /etc/update-motd.d/
+  ansible.builtin.find:
+    paths: /etc/update-motd.d/
+    file_type: file
+  register: motd_files
+
+- name: Remove executable permission from all files in /etc/update-motd.d/
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: '0644'
+  loop: "{{ motd_files.files }}"

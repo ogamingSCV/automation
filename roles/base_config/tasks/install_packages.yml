@@ -1,0 +1,39 @@
+---
+- name: Install default packages
+  ansible.builtin.apt:
+    state: present
+    name:
+      - vim
+      - git
+      - htop
+      - tree
+      - curl
+      - openssh-sftp-server # needed for better ansible performance
+
+- name: Remove unneeded packages
+  ansible.builtin.apt:
+    state: absent
+    name:
+      - motd-news-configcloud-init
+      - cloud-guest-utils
+      - cloud-initramfs-copymods
+      - cloud-initramfs-dyn-netconflandscape-common
+      - motd-news-config
+      - pollinate
+      - popularity-contest
+      - ubuntu-advantage-toolsopen-iscsi
+      - multipath-tools
+      - accountsservice
+      - cryptsetup-initramfs
+
+- name: Run purge
+  ansible.builtin.apt:
+    purge: true
+
+- name: Run autoclean
+  ansible.builtin.apt:
+    autoclean: true
+
+- name: Run autoremove
+  ansible.builtin.apt:
+    autoremove: true

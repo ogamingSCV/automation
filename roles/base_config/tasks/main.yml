@@ -1,0 +1,53 @@
+---
+- name: Import ca tasks
+  ansible.builtin.import_tasks: ca.yml
+
+- name: Import DNS tasks
+  ansible.builtin.import_tasks: dns.yml
+
+- name: Import repo tasks
+  ansible.builtin.import_tasks: repo.yml
+
+- name: Import update tasks
+  ansible.builtin.import_tasks: update_packages.yml
+
+- name: Import install tasks
+  ansible.builtin.import_tasks: install_packages.yml
+
+- name: Import user tasks
+  ansible.builtin.import_tasks: users.yml
+
+- name: Import locale tasks
+  ansible.builtin.import_tasks: locale.yml
+
+# - name: Import zsh tasks
+#   ansible.builtin.import_tasks: zsh_setup.yml
+
+- name: Import fail2ban tasks
+  ansible.builtin.import_tasks: fail2ban.yml
+
+- name: Import time tasks
+  ansible.builtin.import_tasks: time.yml
+
+- name: Import sshd tasks
+  ansible.builtin.import_tasks: sshd.yml
+
+- name: Import neofetch tasks
+  ansible.builtin.import_tasks: neofetch.yml
+
+- name: Import firewall tasks
+  ansible.builtin.import_tasks: firewall.yml
+
+#- name: Import checkmk tasks
+#  ansible.builtin.import_tasks: checkmk.yml
+
+# History settings (Timestamp ID etc)
+# zsh reverse search to skip same entries
+# Snapshot "ansible_done"
+# Copy wildcard cert or generate new automaticlly (permissions!!)
+# Hostname
+# Auto DNS
+# CheckMK
+# Syslog
+# Authentik
+# iLert message when done with setup

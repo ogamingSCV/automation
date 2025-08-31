@@ -1,0 +1,26 @@
+---
+- name: Allow all access to tcp port 80 (http)
+  community.general.ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+  when: web_service == true
+
+- name: Allow all access to tcp port 443 (https)
+  community.general.ufw:
+    rule: allow
+    port: "443"
+    proto: tcp
+  when: web_service == true
+
+- name: Allow all access to tcp port 22 (ssh)
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Allow all access to tcp port 6556 (checkmk)
+  community.general.ufw:
+    rule: allow
+    port: "6556"
+    proto: tcp

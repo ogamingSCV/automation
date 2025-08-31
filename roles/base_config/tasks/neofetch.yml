@@ -1,0 +1,27 @@
+---
+- name: Install neofetch
+  ansible.builtin.apt:
+    name: neofetch
+    state: present
+
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ user.home }}/.config/neofetch"
+    state: directory
+    owner: "{{ user.username }}"
+    group: "{{ user.username }}"
+    mode: '0755'
+  loop: "{{ base_config_users }}"
+  loop_control:
+    loop_var: user
+
+- name: Copy neofetch config template
+  ansible.builtin.copy:
+    src: neofetch.conf
+    dest: "{{ user.home }}/.config/neofetch/config.conf"
+    owner: "{{ user.username }}"
+    group: "{{ user.username }}"
+    mode: '0644'
+  loop: "{{ base_config_users }}"
+  loop_control:
+    loop_var: user

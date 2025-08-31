@@ -1,0 +1,150 @@
+---
+- name: Ensure Zsh is installed
+  ansible.builtin.package:
+    name:
+      - zsh
+      - git
+      - fonts-powerline
+    state: present
+
+- name: Install zinit for each user
+  ansible.builtin.shell:
+    cmd: bash -c "$(curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh)"
+  args:
+    executable: /bin/bash
+    creates: "{{ user.home }}/.local/share/zinit/zinit.git"
+  loop: "{{ base_config_users }}"
+  loop_control:
+    loop_var: user
+  environment:
+    HOME: "{{ user.home }}"
+    USER: "{{ user.username }}"
+  become_user: "{{ user.username }}"
+  become: true
+
+- name: Update zinit for each user
+  ansible.builtin.shell:
+    cmd: zinit self-update
+  args:
+    executable: /bin/zsh
+  loop: "{{ base_config_users }}"
+  loop_control:
+    loop_var: user
+  environment:
+    HOME: "{{ user.home }}"
+    USER: "{{ user.username }}"
+  become_user: "{{ user.username }}"
+  become: true
+  changed_when: false
+
+- name: Set Zsh as default shell for each user
+  ansible.builtin.user:
+    name: "{{ user.username }}"
+    shell: /bin/zsh
+  loop: "{{ base_config_users }}"
+  loop_control:
+    loop_var: user
+
+- name: Copy custom .zshrc for each user
+  ansible.builtin.copy:
+    src: zshrc_zinit
+    dest: "{{ user.home }}/.zshrc"
+    owner: "{{ user.username }}"
+    group: "{{ user.username }}"
+    mode: '0644'
+  loop: "{{ base_config_users }}"
+  loop_control:
+    loop_var: user
+
+# - name: Install Powerline fonts for each user
+#   ansible.builtin.shell:
+#     cmd: bash -c "$(curl --fail --show-error --silent --location https://raw.githubusercontent.com/powerline/fonts/refs/heads/master/install.sh)"
+#   args:
+#     executable: /bin/bash
+#     creates: "{{ user.home }}/.local/share/zinit/zinit.git"
+#   loop: "{{ base_config_users }}"
+#   loop_control:
+#     loop_var: user
+#   environment:
+#     HOME: "{{ user.home }}"
+#     USER: "{{ user.username }}"
+#   become_user: "{{ user.username }}"
+#   become: true
+
+# - name: Download Oh My Zsh installer
+#   ansible.builtin.get_url:
+#     url: https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+#     dest: /var/tmp/install_ohmyzsh.sh
+#     mode: '0755'
+#
+# - name: Install Oh My Zsh for each user
+#   ansible.builtin.shell: |
+#     sh -c /var/tmp/install_ohmyzsh.sh --unattended
+#   args:
+#     executable: /bin/bash
+#     creates: "{{ user.home }}/.oh-my-zsh"
+#   loop: "{{ base_config_users }}"
+#   loop_control:
+#     loop_var: user
+#   environment:
+#     HOME: "{{ user.home }}"
+#     USER: "{{ user.username }}"
+#   become_user: "{{ user.username }}"
+#   become: true
+#
+# - name: Set Zsh as default shell for each user
+#   ansible.builtin.user:
+#     name: "{{ user.username }}"
+#     shell: /bin/zsh
+#   loop: "{{ base_config_users }}"
+#   loop_control:
+#     loop_var: user
+#
+# - name: Install you-should-use plugin for each user
+#   ansible.builtin.git:
+#     repo: https://github.com/MichaelAquilina/zsh-you-should-use.git
+#     dest: "{{ user.zsh_path }}/custom/plugins/you-should-use"
+#     version: master
+#   loop: "{{ base_config_users }}"
+#   loop_control:
+#     loop_var: user
+#   become_user: "{{ user.username }}"
+#   become: true
+#
+# - name: Install zsh-autosuggestions plugin for each user
+#   ansible.builtin.git:
+#     repo: https://github.com/zsh-users/zsh-autosuggestions
+#     dest: "{{ user.zsh_path }}/custom/plugins/zsh-autosuggestions"
+#     version: master
+#   loop: "{{ base_config_users }}"
+#   loop_control:
+#     loop_var: user
+#   become_user: "{{ user.username }}"
+#   become: true
+#
+# - name: Install zsh-syntax-highlighting plugin for each user
+#   ansible.builtin.git:
+#     repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
+#     dest: "{{ user.zsh_path }}/custom/plugins/zsh-syntax-highlighting"
+#     version: master
+#   loop: "{{ base_config_users }}"
+#   loop_control:
+#     loop_var: user
+#   become_user: "{{ user.username }}"
+#   become: true
+#
+# - name: Copy custom .zshrc for each user
+#   ansible.builtin.copy:
+#     src: zshrc_omz
+#     dest: "{{ user.home }}/.zshrc"
+#     owner: "{{ user.username }}"
+#     group: "{{ user.username }}"
+#     mode: '0644'
+#   loop: "{{ base_config_users }}"
+#   loop_control:
+#     loop_var: user
+#
+# - name: Clean up the installation script
+#   ansible.builtin.file:
+#     path: /var/tmp/install_ohmyzsh.sh
+#     state: absent

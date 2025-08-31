@@ -1,0 +1,30 @@
+---
+- name: Create user pschmidt
+  ansible.builtin.user:
+    name: pschmidt
+    shell: /bin/bash #/bin/zsh
+    groups: sudo
+    append: true
+
+- name: Set authorized key for user pschmidt
+  ansible.posix.authorized_key:
+    user: pschmidt
+    state: present
+    key: "{{ base_config_pschmidt_ssh_key }}"
+
+- name: Ensure user pschmidt has passwordless sudo rights
+  ansible.builtin.lineinfile:
+    dest: /etc/sudoers
+    state: present
+    line: 'pschmidt ALL=(ALL) NOPASSWD:ALL'
+    validate: '/usr/sbin/visudo -cf %s'
+
+- name: Remove sudo hint message for pschmidt user
+  ansible.builtin.file:
+    path: "/home/pschmidt/.sudo_as_admin_successful"
+    state: touch
+    owner: pschmidt
+    group: pschmidt
+    mode: "0640"
+  #args:
+  #  creates: "/home/pschmidt/.sudo_as_admin_successful"
