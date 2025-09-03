@@ -1,0 +1,8 @@
+---
+- name: Update Cache
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Update Packags
+  ansible.builtin.apt:
+    upgrade: true
