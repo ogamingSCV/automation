@@ -1,3 +1,12 @@
 ---
-- name: Import letsencrypt tasks
-  ansible.builtin.import_tasks: letsencrypt.yml
+# Run issuance tasks if we have cert_domains
+- name: Run certificate issuance tasks
+  ansible.builtin.include_tasks: issue.yml
+  when: cert_domains | default([]) | length > 0
+
+# Run cleanup tasks if cert_domains empty but marker exists
+- name: Run certificate cleanup tasks
+  ansible.builtin.include_tasks: cleanup.yml
+  when:
+    - cert_domains | default([]) | length == 0
+    - managed_marker.stat.exists

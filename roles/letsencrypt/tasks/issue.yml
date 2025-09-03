@@ -1,0 +1,65 @@
+---
+- name: Install Certbot with Cloudflare DNS plugin
+  apt:
+    name:
+      - python3-certbot
+      - python3-certbot-dns-cloudflare
+    state: present
+    update_cache: true
+  become: true
+
+- name: Ensure certbot secrets directory exists
+  file:
+    path: /root/.secrets/certbot
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  become: true
+
+- name: Copy Cloudflare credentials for Certbot DNS challenge
+  copy:
+    content: |
+      dns_cloudflare_api_token = {{ cloudflare_api_token }}
+    dest: /root/.secrets/certbot/cloudflare.ini
+    owner: root
+    group: root
+    mode: '0600'
+  become: true
+
+- name: Filter valid LE domains
+  set_fact:
+    le_domains: "{{ cert_domains | default([]) | select('search', '(' ~ valid_le_domains | join('|') ~ ')$') | list }}"
+
+- name: Debug LE domains
+  debug:
+    msg: "Requesting certs for {{ le_domains }}"
+
+- name: Obtain or renew individual Let's Encrypt certificates
+  command: >
+    certbot certonly
+    --dns-cloudflare
+    --dns-cloudflare-credentials /root/.secrets/certbot/cloudflare.ini
+    --dns-cloudflare-propagation-seconds 60
+    --non-interactive
+    --agree-tos
+    --no-eff-email
+    --email {{ letsencrypt_email }}
+    -d {{ item }}
+  args:
+    creates: "/etc/letsencrypt/live/{{ item }}/fullchain.pem"
+  loop: "{{ le_domains }}"
+  loop_control:
+    label: "{{ item }}"
+  become: true
+
+- name: Create managed marker
+  file:
+    path: /etc/letsencrypt/.managed
+    state: touch
+    owner: root
+    group: root
+    mode: '0644'
+    modification_time: preserve
+    access_time: preserve
+  become: true

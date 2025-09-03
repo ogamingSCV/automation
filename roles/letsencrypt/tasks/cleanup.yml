@@ -1,0 +1,38 @@
+---
+- name: Get certbot certificates
+  command: certbot certificates
+  register: all_certs
+  changed_when: false
+
+- name: Parse certificate names and domains
+  set_fact:
+    certbot_certs: "{{ certbot_certs | default([]) + [ {'name': item.0, 'domains': item.1.split() } ] }}"
+  with_together:
+    - "{{ all_certs.stdout | regex_findall('Certificate Name: (\\S+)') }}"
+    - "{{ all_certs.stdout | regex_findall('Domains: (.+)') }}"
+  when: all_certs.stdout is search('Certificate Name:')
+
+- name: Mark certs with no overlap
+  set_fact:
+    certs_to_delete: "{{ (certs_to_delete | default([])) + [ item.name ] }}"
+  loop: "{{ certbot_certs | default([]) }}"
+  when: item.domains | intersect(le_domains | default([])) | length == 0
+
+- name: Debug certs to delete
+  debug:
+    var: certs_to_delete
+
+- name: Delete unused certificates
+  command: certbot delete --cert-name {{ item }} --non-interactive
+  loop: "{{ certs_to_delete | default([]) }}"
+  become: true
+  when: certs_to_delete is defined and certs_to_delete | length > 0
+
+- name: Remove managed marker
+  file:
+    path: /etc/letsencrypt/.managed
+    state: absent
+  become: true
+  when:
+    - le_domains | default([]) | length == 0
+    - managed_marker.stat.exists
