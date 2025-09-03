@@ -1,9 +1,0 @@
----
-- name: Install ufw
-  ansible.builtin.package:
-    name: ufw
-    state: present
-
-- name: Allow important ports
-  community.general.ufw:
-    
