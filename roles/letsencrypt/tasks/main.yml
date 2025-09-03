@@ -1,0 +1,3 @@
+---
+- name: Import letsencrypt tasks
+  ansible.builtin.import_tasks: letsencrypt.yml
