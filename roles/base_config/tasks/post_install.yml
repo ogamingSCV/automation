@@ -1,0 +1,42 @@
+---
+- name: "Create PVE snapshot after role applied"
+  uri:
+    url: "{{ proxmox_api_url }}/nodes/{{ proxmox_node }}/lxc/{{ vmid }}/snapshot"
+    method: POST
+    headers:
+      Authorization: "PVEAPIToken={{ proxmox_api_token_id }}={{ proxmox_api_secret }}"
+      Content-Type: "application/x-www-form-urlencoded"
+    body: "snapname={{ snapshot_name }}&description=Snapshot created after Ansible base_role was applied"
+    body_format: form-urlencoded
+    validate_certs: false
+  delegate_to: localhost
+  run_once: true
+
+#- name: "Send iLert notification that basic setup is complete"
+#  uri:
+#    url: "https://api.ilert.com/api/v1/events"
+#    method: POST
+#    headers:
+#      Content-Type: "application/json"
+#      X-API-KEY: "{{ ilert_api_key }}"
+#    body_format: json
+#    body:
+#      summary: "🚀 Basic setup completed for {{ inventory_hostname }}"
+#      eventType: "INFO"
+#      alias: "basic-setup-{{ inventory_hostname }}"
+#      details:
+#        host: "{{ inventory_hostname }}"
+#        timestamp: "{{ ansible_date_time.iso8601 }}"
+#        role_applied: "base_role"
+#      source: "Ansible Playbook"
+#    status_code: 202
+#  delegate_to: localhost
+#  run_once: true
+
+- name: "Notify Home Assistant to flash light"
+  uri:
+    url: "http://{{ homeassistnat_address }}/api/webhook/{{ homeassistnat_flash_webhook }}"
+    method: POST
+    status_code: 200
+  delegate_to: localhost
+  run_once: true

@@ -29,7 +29,7 @@
     return_content: true
     headers:
       Content-Type: "application/json"
-      url_username: "{{ adguard_api_user }}"
-      url_password: "{{ adguard_api_pass }}"
-      force_basic_auth: true
+    url_username: "{{ adguard_api_user }}"
+    url_password: "{{ adguard_api_pass }}"
+    force_basic_auth: true
   delegate_to: localhost

@@ -41,6 +41,9 @@
 #- name: Import checkmk tasks
 #  ansible.builtin.import_tasks: checkmk.yml
 
+- name: Import post install tasks
+  ansible.builtin.import_tasks: post_install.yml
+
 # History settings (Timestamp ID etc)
 # zsh reverse search to skip same entries
 # Snapshot "ansible_done"
