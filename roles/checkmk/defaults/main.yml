@@ -1,2 +1,3 @@
 ---
-# defaults file for checkmk
+checkmk_channel: "cloud"
+checkmk_version: "2.4.0p10"

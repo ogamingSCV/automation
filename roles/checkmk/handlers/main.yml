@@ -1,2 +1,5 @@
 ---
-# handlers file for checkmk
+- name: Reload apache
+  ansible.builtin.service:
+    name: apache2
+    state: reloaded

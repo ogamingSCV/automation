@@ -1,2 +1,178 @@
 ---
-# tasks file for checkmk
+- name: "Map Checkmk edition suffix used in omd versions"
+  set_fact:
+    checkmk_edition_suffix: >-
+      {% if checkmk_channel == 'raw' %}
+        cre
+      {% elif checkmk_channel == 'enterprise' %}
+        cee
+      {% elif checkmk_channel == 'cloud' %}
+        cce
+      {% else %}
+        unknown
+      {% endif %}
+
+- name: "Check if omd command is available"
+  command: which omd
+  register: omd_exists
+  ignore_errors: true
+  changed_when: false
+
+- name: "Set version installed flag to false if omd is not available"
+  set_fact:
+    checkmk_version_installed: false
+  when: omd_exists.rc != 0
+
+- name: "Check installed Checkmk versions"
+  command: omd versions
+  register: omd_versions
+  changed_when: false
+  failed_when: false
+  become: true
+  when: omd_exists.rc == 0
+
+- name: "Extract installed versions"
+  set_fact:
+    checkmk_installed_versions: >-
+      {{ omd_versions.stdout_lines
+          | map('regex_replace', '\s*\(.*\)', '')
+          | map('trim')
+          | map('regex_replace', '\s+', '')
+          | list }}
+  when: omd_versions.stdout_lines is defined
+
+- name: "Ensure default for installed versions if omd_versions failed"
+  set_fact:
+    checkmk_installed_versions: []
+  when:
+    - omd_exists.rc == 0
+    - omd_versions.stdout_lines is not defined
+
+- name: "Set full Checkmk version string"
+  set_fact:
+    checkmk_full_version: >-
+      {{ (checkmk_version + '.' + checkmk_edition_suffix) | trim | regex_replace('\s+', '') }}
+  when: omd_exists.rc == 0
+
+- name: "Check if version + edition is already installed"
+  set_fact:
+    checkmk_version_installed: >-
+      {{ checkmk_installed_versions is defined and (checkmk_full_version in checkmk_installed_versions) }}
+  when: omd_exists.rc == 0
+
+- name: "Install new Checkmk version if not available"
+  block:
+    - name: "Map architecture for Checkmk download"
+      set_fact:
+        checkmk_arch: >-
+          {% if ansible_architecture == 'x86_64' %}amd64{% else %}{{ ansible_architecture }}{% endif %}
+
+    - name: "Download Checkmk package"
+      get_url:
+        url: "https://download.checkmk.com/checkmk/{{ checkmk_version }}/check-mk-{{ checkmk_channel }}-{{ checkmk_version }}_0.{{ ansible_distribution_release }}_{{ checkmk_arch }}.deb"
+        dest: "/tmp/check-mk-{{ checkmk_version }}.deb"
+        mode: '0644'
+      become: true
+      when: not checkmk_version_installed
+
+    - name: "Install Checkmk package"
+      apt:
+        deb: "/tmp/check-mk-{{ checkmk_version }}.deb"
+        state: present
+      become: true
+      when: not checkmk_version_installed
+
+    - name: "Remove downloaded Checkmk package"
+      file:
+        path: "/tmp/check-mk-{{ checkmk_version }}.deb"
+        state: absent
+      become: true
+      when: not checkmk_version_installed
+
+- name: "Check if site exists"
+  stat:
+    path: "/omd/sites/{{ checkmk_var_site }}"
+  register: site_dir
+  become: true
+
+- name: "Create Checkmk site if missing"
+  command: omd create {{ checkmk_var_site }}
+  when: not site_dir.stat.exists
+  become: true
+
+- name: "Update Checkmk site if version was installed"
+  block:
+    - name: "Stop site before upgrade"
+      command: omd stop
+      become: true
+
+    - name: "Perform Checkmk update"
+      command: omd --force -V {{ checkmk_full_version }} update {{ checkmk_var_site }} --conflict=install
+      become: true
+  when:
+    - site_dir.stat.exists
+    - not checkmk_version_installed
+
+- name: "Remove older versions (keep newest 2)"
+  block:
+    - name: "Re-check installed versions after upgrade"
+      command: omd versions
+      register: omd_versions_after
+      changed_when: false
+      become: true
+
+    - name: "Extract version list again"
+      set_fact:
+        checkmk_installed_versions_sorted: >-
+          {{ omd_versions_after.stdout_lines
+              | map('regex_replace', '\\s*\\(.*\\)', '')
+              | map('trim')
+              | map('regex_replace', '\\s+', '')
+              | sort(attribute='split', reverse=True) }}
+
+    - name: "Find versions to delete (all except 2 newest)"
+      set_fact:
+        checkmk_versions_to_remove: "{{ checkmk_installed_versions_sorted[2:] }}"
+
+    - name: "Purge old versions via apt"
+      apt:
+        name: "check-mk-{{ checkmk_channel }}-{{ item }}"
+        state: absent
+        purge: true
+      loop: "{{ checkmk_versions_to_remove }}"
+      loop_control:
+        label: "{{ item }}"
+      become: true
+  when: omd_versions_after.stdout_lines is defined and (omd_versions_after.stdout_lines | length > 2)
+
+- name: Disable default Apache site
+  ansible.builtin.command:
+    cmd: a2dissite 000-default.conf
+  args:
+    removes: /etc/apache2/sites-enabled/000-default.conf
+  notify: Reload apache
+
+- name: Ensure Checkmk Apache config is linked as default
+  ansible.builtin.file:
+    src: "/omd/sites/{{ checkmk_var_site }}/etc/apache/conf.d/apache.conf"
+    dest: "/etc/apache2/sites-enabled/000-{{ checkmk_var_site }}.conf"
+    state: link
+  notify: Reload apache
+
+- name: Set Checkmk site Apache mode to 'own'
+  ansible.builtin.command:
+    cmd: "omd config {{ checkmk_var_site }} set APACHE_MODE own"
+  register: omd_apache_mode
+  changed_when: "'Changed' in omd_apache_mode.stdout"
+
+- name: "Check if site is running"
+  command: omd status {{ checkmk_var_site }}
+  register: site_status
+  failed_when: false
+  changed_when: false
+  become: true
+
+- name: "Start site if not running"
+  command: omd start {{ checkmk_var_site }}
+  when: site_status.stdout is not search('running')
+  become: true
